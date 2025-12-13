@@ -18,6 +18,9 @@ try:
     appointments_collection = mongo_db["appointments"]
     patients_collection = mongo_db["patients"]
     otp_collection = mongo_db["otp_storage"]
+    predictions_collection = mongo_db["predictions"]
+    medical_records_collection = mongo_db["medical_records"]
+
     # مؤقتاً
     temp_patients_collection = mongo_db["temp_patients"]
     temp_doctors_collection = mongo_db["temp_doctors"]

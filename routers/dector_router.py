@@ -3,7 +3,7 @@ from fastapi import HTTPException, Request
 from typing import Optional
 from model.doctor_model import UpdateDoctorModel, LoginDoctorModel
 from model.otp_model import OTPRequest, OTPVerifyRequest
-from Controller.doctor_controller import doctor_controller, get_all_doctors, get_current_doctor, get_doctor_by_id, register_doctor_temp, login_doctor, confirm_doctor_registration, update_doctor
+from Controller.doctor_controller import doctor_controller, get_all_doctors, get_current_doctor, get_doctor_by_id, get_patient_info, register_doctor_temp, login_doctor, confirm_doctor_registration, update_doctor
 
 router = APIRouter(
     prefix="/doctors",
@@ -120,3 +120,14 @@ async def get_doctor(doctor_id: str):
     if not doctor:
         raise HTTPException(status_code=404, detail="Doctor not found")
     return doctor
+
+
+
+
+
+@router.get("/patients/{patient_id}")
+async def patient_details(patient_id: str, current_doctor: dict = Depends(get_current_doctor)):
+    """
+    يعرض كل بيانات المريض للدكتور الحالي
+    """
+    return await get_patient_info(patient_id)

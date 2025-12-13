@@ -13,7 +13,8 @@ from Controller.patient_controller import (
     update_patient,
     get_current_patient,
     confirm_registration
-,register_patient
+,register_patient,
+change_password_after_otp
 )
 from model.otp_model import OTPRequest, OTPVerifyRequest
 from Controller.patient_controller import patient_controller
@@ -54,14 +55,10 @@ def logout(Authorization: str = Header(...)):
 
 # تغيير كلمة مرور المريض
 # ================== تغيير كلمة المرور بعد OTP ==================
+
 @router.put("/change-password-after-otp")
 async def change_password_after_otp_endpoint(request_data: ChangePasswordRequest):
-    """
-    تغيير كلمة مرور المريض بعد التحقق من OTP بدون الحاجة إلى JWT.
-    """
-    return await patient_controller.change_password_after_otp(request_data)
-
-
+    return await change_password_after_otp(request_data)
 
 # بيانات المريض الحالي
 @router.get("/me")

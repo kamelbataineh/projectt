@@ -369,6 +369,16 @@ async def login_doctor(request_data: LoginDoctorModel, request: Request):
 #----------------------------------------
 #
 
+# ================== استدعاء مجموعة المرضى ==================
+patients_collection = mongo_db["patients"]
+
+# ================== جلب كل معلومات مريض ==================
+async def get_patient_info(patient_id: str):
+    patient = await patients_collection.find_one({"_id": ObjectId(patient_id)})
+    if not patient:
+        raise HTTPException(status_code=404, detail="Patient not found")
+    patient["_id"] = str(patient["_id"])
+    return patient
 
 
 
