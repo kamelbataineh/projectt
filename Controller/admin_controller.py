@@ -120,6 +120,31 @@ class AdminController:
         updated_patient = await patients_collection.find_one({"_id": ObjectId(patient_id)})
         updated_patient["_id"] = str(updated_patient["_id"])
         return updated_patient
+    
+
+
+    async def delete_doctor(self, doctor_id: str):
+        doctor = await doctors_collection.find_one({"_id": ObjectId(doctor_id)})
+        if not doctor:
+            raise HTTPException(status_code=404, detail="Doctor not found")
+    
+        await doctors_collection.delete_one({"_id": ObjectId(doctor_id)})
+        return {"message": f"Doctor {doctor['first_name']} {doctor['last_name']} deleted successfully"}
+
+
+
+
+
+
+    
+    async def delete_patient(self, patient_id: str):
+        patient = await patients_collection.find_one({"_id": ObjectId(patient_id)})
+        if not patient:
+            raise HTTPException(status_code=404, detail="Patient not found")
+
+        await patients_collection.delete_one({"_id": ObjectId(patient_id)})
+        return {"message": f"Patient {patient['first_name']} {patient['last_name']} deleted successfully"}
+
 
 admin_controller = AdminController()
 
@@ -220,3 +245,8 @@ batainehkamel2@gmail.com
         username=SMTP_LOGIN,
         password=SMTP_PASSWORD
     )
+
+
+
+
+

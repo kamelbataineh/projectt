@@ -84,3 +84,27 @@ async def toggle_patient_active(patient_id: str, payload: dict):
 
     updated_patient = await admin_controller.update_patient(patient_id, is_active)
     return {"message": "Patient status updated", "patient": updated_patient}
+
+
+
+@router.delete("/doctor/{doctor_id}")
+async def delete_doctor(doctor_id: str, current_admin=Depends(get_current_admin)):
+    result = await admin_controller.delete_doctor(doctor_id)
+    return result
+
+
+    # ---------------- حذف المريض ----------------
+@router.delete("/patient/{patient_id}")
+async def delete_patient(patient_id: str, current_admin=Depends(get_current_admin)):
+    result = await admin_controller.delete_patient(patient_id)
+    return result
+
+
+
+# ---------------- تسجيل الخروج ----------------
+@router.post("/logout")
+async def logout_admin(current_admin=Depends(get_current_admin)):
+    """
+    تسجيل الخروج: ببساطة يُعلم العميل أن يسجل الخروج
+    """
+    return {"message": "Logged out successfully"}

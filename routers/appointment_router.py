@@ -196,7 +196,6 @@ async def approve_cancel(appointment_id: str, token: str = Depends(get_token)):
 
 @router.delete("/delete/{appointment_id}")
 async def delete_appointment(appointment_id: str):
-    # تحقق أن المعرف صالح
     try:
         obj_id = ObjectId(appointment_id)
     except Exception:
@@ -208,7 +207,7 @@ async def delete_appointment(appointment_id: str):
         return {"message": "تم حذف الموعد بنجاح"}
     else:
         raise HTTPException(status_code=404, detail="الموعد غير موجود")
-    
+
 
 @router.get("/send-reminders")
 async def run_reminders():
