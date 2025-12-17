@@ -96,3 +96,12 @@ async def search_medical_records(
 
 
 
+
+
+
+@router.get("/patients/{patient_id}")
+async def get_patient_by_id(
+    patient_id: str,
+    current_user: dict = Depends(get_current_user)
+):
+    return await controller.get_patient_by_id(patient_id, current_user)

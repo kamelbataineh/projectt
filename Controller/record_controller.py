@@ -82,13 +82,13 @@ class MedicalRecordController:
     
         # تحويل بيانات السجل من Pydantic إلى dict
         record_data = request.data.dict()
-    
-        # إضافة سجل التحديث الأول
+        doctor_full_name = f"{doctor.get('first_name', '')} {doctor.get('last_name', '')}".strip()
         initial_update = {
-            "updated_by": doctor.get("name", "Unknown Doctor"),
-            "timestamp": datetime.utcnow(),
-            "changes": "Initial record creation"
-        }
+                "updated_by": doctor_full_name or "Unknown Doctor",
+                "timestamp": datetime.utcnow(),
+                "changes": "Initial record creation"
+            }
+        
         record_data["update_history"] = [initial_update]
     
         # إنشاء المستند النهائي مع IDs
@@ -119,7 +119,7 @@ class MedicalRecordController:
                 status_code=status.HTTP_400_BAD_REQUEST,
                 detail="Invalid record ID format"
             )
- 
+
         record = await self.medical_records_collection.find_one({"_id": obj_id})
         if not record:
             raise HTTPException(
@@ -178,29 +178,33 @@ class MedicalRecordController:
                 detail="Record not found"
             )
 
-        # التحقق من أن الطبيب هو منشئ السجل أو لديه صلاحية
-        if record["doctor_id"] != current_user["_id"]:
+
+        record = await self.get_medical_record(record_id, current_user)
+        
+        # تحويل كلاهما إلى string قبل المقارنة
+        if str(record["doctor_id"]) != str(current_user["_id"]):
             raise HTTPException(
                 status_code=status.HTTP_403_FORBIDDEN,
                 detail="You can only update records you created"
             )
+        
 
         # إعداد البيانات المحدثة
         updated_data = request.data.dict()
         
-        # إضافة سجل التحديث الجديد
+        doctor_full_name = f"{doctor.get('first_name', '')} {doctor.get('last_name', '')}".strip()
         new_update = UpdateRecord(
-            updated_by=doctor.get("name", "Unknown Doctor"),
+            updated_by=doctor_full_name or "Unknown Doctor",
             changes=request.changes_description
         )
-        
+
         # الحفاظ على سجل التحديث القديم وإضافة الجديد
         existing_history = record["data"].get("update_history", [])
         existing_history.append(new_update.dict())
         updated_data["update_history"] = existing_history
 
         # تحديث السجل
-        update_result = self.medical_records_collection.update_one(
+        update_result = await self.medical_records_collection.update_one(
             {"_id": obj_id},
             {
                 "$set": {
@@ -364,31 +368,34 @@ class MedicalRecordController:
         }
 
     # ================== سجلات الطبيب (الخاصة به فقط) ==================
+    # ================== سجلات الطبيب (الخاصة به فقط) ==================
     async def get_doctor_created_records(self, page: int, limit: int, current_user: dict):
         if current_user["role"] != "doctor":
             raise HTTPException(
                 status_code=status.HTTP_403_FORBIDDEN,
                 detail="Only doctors can access created records"
             )
-
+    
         skip = (page - 1) * limit
-        
-        # جلب السجلات التي أنشأها الطبيب فقط
-        total_records = self.medical_records_collection.count_documents({
+    
+        # جلب عدد السجلات
+        total_records = await self.medical_records_collection.count_documents({
             "doctor_id": current_user["_id"]
         })
-        
+    
+        # جلب السجلات الفعلية مع pagination
         records_cursor = self.medical_records_collection.find({
             "doctor_id": current_user["_id"]
-        })\
-        .sort("created_at", -1)\
-        .skip(skip)\
-        .limit(limit)
-        
-        records = [self.convert_objectid_to_str(record) for record in records_cursor]
-        
+        }).sort("created_at", -1).skip(skip).limit(limit)
+    
+        # تحويل cursor إلى قائمة
+        records_list = await records_cursor.to_list(length=limit)
+    
+        # تحويل ObjectId إلى str
+        records = [self.convert_objectid_to_str(record) for record in records_list]
+    
         total_pages = (total_records + limit - 1) // limit if total_records > 0 else 1
-
+    
         return {
             "page": page,
             "limit": limit,
@@ -399,9 +406,32 @@ class MedicalRecordController:
             "records": records
         }
 
+
+
+
+
+
+
+    async def get_patient_by_id(self, patient_id: str, current_user: dict):
+        try:
+            patient = await self.patients_collection.find_one(
+                {"_id": ObjectId(patient_id)}
+            )
+        except Exception:
+            raise HTTPException(status_code=400, detail="Invalid patient ID")
+    
+        if not patient:
+            raise HTTPException(status_code=404, detail="Patient not found")
+    
+        return self.convert_objectid_to_str(patient)
+    
+
+
+
+
     # ================== البحث في السجلات ==================
     async def search_medical_records(self, patient_name: Optional[str], doctor_name: Optional[str], 
-                                     page: int, limit: int, current_user: dict):
+        page: int, limit: int, current_user: dict):
         if current_user["role"] != "doctor":
             raise HTTPException(
                 status_code=status.HTTP_403_FORBIDDEN,
@@ -471,10 +501,12 @@ class MedicalRecordController:
             
             # الحصول على معلومات الطبيب
             doctor = self.doctors_collection.find_one({"_id": ObjectId(record["doctor_id"])})
-            record["doctor_name"] = doctor.get("name", "Unknown") if doctor else "Unknown"
-        
-        total_pages = (total_records + limit - 1) // limit if total_records > 0 else 1
-
+            if doctor:
+                record["doctor_name"] = f"{doctor.get('first_name','')} {doctor.get('last_name','')}".strip()
+            else:
+                record["doctor_name"] = "Unknown Doctor"
+                total_pages = (total_records + limit - 1) // limit if total_records > 0 else 1
+            
         return {
             "page": page,
             "limit": limit,
