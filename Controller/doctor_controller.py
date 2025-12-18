@@ -384,8 +384,12 @@ async def get_patient_info(patient_id: str):
 
 # ============= الحصول على بيانات المستخدم الحالي =============
 async def get_current_doctor(token: str = Depends(oauth2_scheme)):
+    token_value = token.replace("Bearer ", "") if token.startswith("Bearer ") else token
+    if token_value in blacklisted_tokens:
+        raise HTTPException(status_code=401, detail="Token has been logged out")
+    
     try:
-        payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
+        payload = jwt.decode(token_value, SECRET_KEY, algorithms=[ALGORITHM])
         doctor = await doctors_collection.find_one({"_id": ObjectId(payload["id"])})
         if not doctor:
             raise HTTPException(status_code=404, detail="لم يتم العثور على الدكتور")
@@ -543,8 +547,6 @@ async def update_doctor(update_data: UpdateDoctorModel, current_user, profile_im
 
 
 
-
-
 #
 ####################################################
 ####################################################
@@ -580,9 +582,11 @@ ALGORITHM = "HS256"
 class DoctorController:
     def __init__(self):
         self.otp_collection = otp_collection  # تم تعريفها داخل الكلاس
+        self.blacklisted_tokens = set()
 
-
-
+    async def logout_doctor(self, token: str):
+        self.blacklisted_tokens.add(token)
+        return {"detail": "Logged out successfully"}
 
     async def startup_event(self):
         await self.otp_collection.create_index("expires", expireAfterSeconds=0)
@@ -688,4 +692,29 @@ class DoctorController:
             "patient_id": str(doctor["_id"])
         }
 
+
+
+
+    async def change_password_after_otp(self, email: str, new_password: str):
+        # تحقق من وجود OTP مصدق
+        otp_entry = await otp_collection.find_one({"email": email, "verified": True})
+        if not otp_entry:
+            raise HTTPException(status_code=400, detail="OTP not verified or expired")
+
+        # تشفير الباسورد الجديد
+        hashed_password = bcrypt_context.hash(new_password)
+
+        # تحديث الباسورد في قاعدة البيانات
+        result = await doctors_collection.update_one(
+            {"email": email},
+            {"$set": {"hashed_password": hashed_password}}
+        )
+
+        if result.modified_count == 0:
+            return False
+
+        # حذف OTP بعد نجاح التغيير
+        await otp_collection.delete_one({"email": email})
+
+        return True
 doctor_controller = DoctorController()

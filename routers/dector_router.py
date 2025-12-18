@@ -1,6 +1,8 @@
-from fastapi import APIRouter, Depends, Form, UploadFile, File
+from fastapi import APIRouter, Depends, Form, Header, UploadFile, File
 from fastapi import HTTPException, Request
 from typing import Optional
+
+from pydantic import BaseModel, EmailStr
 from model.doctor_model import UpdateDoctorModel, LoginDoctorModel
 from model.otp_model import OTPRequest, OTPVerifyRequest
 from Controller.doctor_controller import doctor_controller, get_all_doctors, get_current_doctor, get_doctor_by_id, get_patient_info, register_doctor_temp, login_doctor, confirm_doctor_registration, update_doctor
@@ -9,7 +11,9 @@ router = APIRouter(
     prefix="/doctors",
     tags=["Doctors"]
 )
-
+class ChangePasswordAfterOTPRequest(BaseModel):
+    email: EmailStr
+    new_password: str
 # ---------------- تسجيل دكتور مؤقت + رفع CV ----------------
 @router.post("/register-temp")
 async def register_temp(
@@ -131,3 +135,30 @@ async def patient_details(patient_id: str, current_doctor: dict = Depends(get_cu
     يعرض كل بيانات المريض للدكتور الحالي
     """
     return await get_patient_info(patient_id)
+
+
+
+@router.put("/change-password-after-otp")
+async def change_password_after_otp(request: ChangePasswordAfterOTPRequest):
+    """
+    يغير الباسورد بعد التحقق من OTP
+    """
+    success = await doctor_controller.change_password_after_otp(
+        email=request.email,
+        new_password=request.new_password
+    )
+
+    if not success:
+        raise HTTPException(status_code=400, detail="Failed to update password")
+    
+    return {"detail": "Password updated successfully"}
+
+
+
+
+
+
+@router.post("/logout")
+async def logout(authorization: str = Header(...)):
+    token = authorization.replace("Bearer ", "")
+    return await doctor_controller.logout_doctor(token)

@@ -133,16 +133,22 @@ async def doctor_appointments(token: str = Depends(oauth2_scheme)):
 @router.post("/approve/{appointment_id}")
 async def approve_route(
     appointment_id: str,
-    approve: bool = Query(None),   
-    revert: bool = Query(False),   
+    approve: bool | None = Query(None),
+    revert: bool = Query(False),
     token: str = Depends(oauth2_scheme)
 ):
+    # إذا لا يوجد approve و revert=False، نرفع 400
+    if approve is None and not revert:
+        raise HTTPException(status_code=400, detail="Must provide approve or revert")
+    
+    # approve_appointment يجب أن تتعامل مع approve=None و revert=True
     return await approve_appointment(
         token=token,
         appointment_id=appointment_id,
         approve=approve,
         revert=revert
     )
+
 
 #----------------------------------------
 #
