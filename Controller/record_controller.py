@@ -246,6 +246,14 @@ class MedicalRecordController:
         records_list = await records_cursor.to_list(length=limit)
         records = [self.convert_objectid_to_str(record) for record in records_list]
     
+        # ✅ إضافة اسم الدكتور لكل سجل
+        for record in records:
+            doctor = await self.doctors_collection.find_one({"_id": ObjectId(record["doctor_id"])})
+            if doctor:
+                record["doctor_name"] = f"{doctor.get('first_name','')} {doctor.get('last_name','')}".strip()
+            else:
+                record["doctor_name"] = "Unknown Doctor"
+    
         total_pages = (total_records + limit - 1) // limit if total_records > 0 else 1
     
         return {
@@ -257,7 +265,7 @@ class MedicalRecordController:
             "has_next": page < total_pages,
             "records": records
         }
-
+    
 
     # ================== كل السجلات للدكاترة مع Pagination ==================
     async def get_doctor_records(self, page: int, limit: int, current_user: dict):

@@ -276,30 +276,33 @@ async def book_appointment(token: str, doctor_id: str, date_time: datetime, reas
 
     # ❌ تحقق إذا المريض لديه موعد بالفعل في نفس الوقت
     existing = await appointments_collection.find_one({
-        "patient_id": patient_id,
-        "status": {"$ne": "Cancelled"},
-        "date_time": date_time
-    })
+    "patient_id": patient_id,
+    "status": {"$ne": "Cancelled"},
+    "date_time": date_time
+})
+
     if existing:
         raise HTTPException(status_code=400, detail="You already have an appointment at this time")
 
     # ❌ تحقق إذا الطبيب لديه موعد في نفس الوقت
     conflict = await appointments_collection.find_one({
-        "doctor_id": doctor_id,
-        "status": {"$ne": "Cancelled"},
-        "date_time": date_time
-    })
+    "doctor_id": doctor_id,
+    "status": {"$ne": "Cancelled"},
+    "date_time": date_time
+})
+
     if conflict:
         raise HTTPException(status_code=400, detail="Doctor has another appointment at this time")
 
     # إعداد المستند
     new_app = {
-        "patient_id": str(patient["_id"]),
-        "doctor_id": str(doctor["_id"]),
-        "date_time": date_time.isoformat(),
-        "reason": reason,
-        "status": "Pending"
-    }
+    "patient_id": str(patient["_id"]),
+    "doctor_id": str(doctor["_id"]),
+    "date_time": date_time,   # ✅ datetime حقيقي
+    "reason": reason,
+    "status": "Pending"
+}
+
     result =await appointments_collection.insert_one(new_app)
     
     # تحويل كل ObjectId إلى string قبل الإرجاع
@@ -514,7 +517,7 @@ async def get_patient_appointments(token: str) -> List[AppointmentResponse]:
         doctor = await doctors_collection.find_one({"_id": ObjectId(app["doctor_id"])})
         
         # تحويل تاريخ ISO string إلى datetime
-        date_obj = datetime.fromisoformat(app["date_time"]) if isinstance(app["date_time"], str) else app["date_time"]
+        date_obj = app["date_time"] if isinstance(app["date_time"], str) else app["date_time"]
 
         status_text = {
             "Pending": "Waiting for doctor's approval",
