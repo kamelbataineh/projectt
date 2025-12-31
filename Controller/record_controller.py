@@ -524,3 +524,51 @@ class MedicalRecordController:
             "has_next": page < total_pages,
             "records": records
         }
+
+
+
+
+
+
+
+
+
+        # ================== حذف سجل طبي ==================
+    async def delete_medical_record(self, record_id: str, current_user: dict):
+        if current_user["role"] != "doctor":
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail="Only doctors can delete medical records"
+            )
+    
+        try:
+            obj_id = ObjectId(record_id)
+        except Exception:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Invalid record ID format"
+            )
+    
+        record = await self.medical_records_collection.find_one({"_id": obj_id})
+        if not record:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="Record not found"
+            )
+    
+        # التحقق أن الطبيب صاحب السجل فقط يمكنه الحذف
+        if str(record["doctor_id"]) != str(current_user["_id"]):
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail="You can only delete records you created"
+            )
+    
+        result = await self.medical_records_collection.delete_one({"_id": obj_id})
+    
+        if result.deleted_count == 0:
+            raise HTTPException(
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                detail="Failed to delete record"
+            )
+    
+        return {"message": "Medical record deleted successfully"}

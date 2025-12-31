@@ -359,9 +359,14 @@ async def approve_appointment(token: str, appointment_id: str, approve: bool, re
             patient = await patients_collection.find_one({"_id": ObjectId(appointment["patient_id"])})
             doctor = await doctors_collection.find_one({"_id": ObjectId(doctor_id)})
             raw_date = appointment["date_time"]
-            clean_date = raw_date.replace("Z", "")
-            date_time = datetime.fromisoformat(clean_date)
-
+            if isinstance(raw_date, str):
+                clean_date = raw_date.replace("Z", "")
+                date_time = datetime.fromisoformat(clean_date)
+            elif isinstance(raw_date, datetime):
+                date_time = raw_date
+            else:
+                raise HTTPException(status_code=500, detail="Invalid date format")
+            
             if patient and doctor:
                 await notify_revert_email(
                     patient_email=patient["email"],
@@ -397,8 +402,14 @@ async def approve_appointment(token: str, appointment_id: str, approve: bool, re
     doctor = await doctors_collection.find_one({"_id": ObjectId(doctor_id)})
 
     raw_date = appointment["date_time"]
-    clean_date = raw_date.replace("Z", "")
-    date_time = datetime.fromisoformat(clean_date)
+
+    if isinstance(raw_date, str):
+        clean_date = raw_date.replace("Z", "")
+        date_time = datetime.fromisoformat(clean_date)
+    elif isinstance(raw_date, datetime):
+        date_time = raw_date
+    else:
+        raise HTTPException(status_code=500, detail="Invalid date format")
 
     # -------------------------------------------
     # 📧 إرسال الإيميل الصحيح:

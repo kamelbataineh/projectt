@@ -105,3 +105,14 @@ async def get_patient_by_id(
     current_user: dict = Depends(get_current_user)
 ):
     return await controller.get_patient_by_id(patient_id, current_user)
+
+
+
+
+# ================== حذف سجل طبي ==================
+@router.delete("/medical_records/{record_id}")
+async def delete_medical_record(
+    record_id: str,
+    current_user: dict = Depends(get_current_user)
+):
+    return await controller.delete_medical_record(record_id, current_user)
