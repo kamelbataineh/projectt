@@ -201,14 +201,39 @@ async def get_chats(user_id: str):
         full_name = f"{user.get('first_name', '')} {user.get('last_name', '')}".strip()
         profile_image = user.get("profile_image_url", "")
 
+               # جلب آخر رسالة كاملة من messages_collection
+        last_msg_doc = await messages_collection.find_one(
+            {"$or": [
+                {"sender_id": user_id, "receiver_id": other_id},
+                {"sender_id": other_id, "receiver_id": user_id}
+            ]},
+            sort=[("timestamp", -1)]
+        )
+        
+        if not last_msg_doc:
+            continue
+        
         final_list.append({
             "chat_with": full_name,
             "chat_with_id": other_id,
             "profile_image_url": profile_image,
-            "lastMessage": c["lastMessage"],
-            "type": c["type"],
-            "filename": c["filename"],
-            "timestamp": str(c["timestamp"])
+            "lastMessage": {
+                "message_text": last_msg_doc.get("message_text", ""),
+                "sender_id": last_msg_doc.get("sender_id", ""),
+                "delivered": last_msg_doc.get("delivered", False),
+                "type": last_msg_doc.get("type", "text"),
+                "filename": last_msg_doc.get("filename")
+            },
+            "timestamp": str(last_msg_doc.get("timestamp"))
         })
+        
 
     return final_list
+
+
+
+
+
+
+
+

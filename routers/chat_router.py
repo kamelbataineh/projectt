@@ -62,7 +62,6 @@ async def upload_file(other_id: str, file: UploadFile = File(...), token: str = 
     return JSONResponse(result)
 
 
-from fastapi.responses import FileResponse
 
 UPLOAD_FOLDER = "uploads"  # تأكد أن نفس المسار
 
@@ -76,3 +75,9 @@ async def preview_file(user_id: str, other_id: str, filename: str):
         decrypted_data = decrypt_bytes(f.read())
     
     return Response(content=decrypted_data, media_type="image/jpeg")  # أو type المناسب
+
+
+
+
+
+
