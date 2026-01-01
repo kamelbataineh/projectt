@@ -160,13 +160,13 @@ SMTP_SERVER = "smtp-relay.brevo.com"
 SMTP_PORT = 465
 SMTP_LOGIN = "9b77a8001@smtp-brevo.com"
 SMTP_PASSWORD = "WSn3aDfVAKMhJwrd"
-FROM_EMAIL = "عياده الامل <douhasharkawi@gmail.com>"
+FROM_EMAIL = "Pink Scan <douhasharkawi@gmail.com>"
 
 async def send_doctor_approval_email(recipient_email: str, doctor_name: str):
     message = MIMEText(f"""
 مرحباً {doctor_name},
 
-✅ تم الموافقة على حسابك في عيادة الأمل.
+✅ تم الموافقة على حسابك في  Pink Scan.
 يمكنك الآن تسجيل الدخول واستخدام حسابك.
 
 شكراً لاختيارك عيادتنا
@@ -174,7 +174,7 @@ async def send_doctor_approval_email(recipient_email: str, doctor_name: str):
 
     message["From"] = FROM_EMAIL
     message["To"] = recipient_email
-    message["Subject"] = "تمت الموافقة على حسابك في عيادة الأمل"
+    message["Subject"] = "تمت الموافقة على حسابك في Pink Scan"
 
     await aiosmtplib.send(
         message,
@@ -192,7 +192,7 @@ async def send_doctor_activation_email(recipient_email: str, doctor_name: str, i
     message = MIMEText(f"""
 مرحباً {doctor_name},
 
-{status_text} في عيادة الأمل.
+{status_text} في Pink Scan.
 
 لأي استفسار يرجى التواصل مع الدعم الفني:
 batainehkamel2@gmail.com
@@ -202,7 +202,7 @@ batainehkamel2@gmail.com
 
     message["From"] = FROM_EMAIL
     message["To"] = recipient_email
-    message["Subject"] = "تحديث حالة حسابك - عيادة الأمل"
+    message["Subject"] = "تحديث حالة حسابك - Pink Scan"
 
     await aiosmtplib.send(
         message,
@@ -223,7 +223,7 @@ async def send_patient_activation_email(recipient_email: str, patient_name: str,
     body = f"""
 مرحباً {patient_name},
 
-{status_text} في عيادة الأمل.
+{status_text} في Pink Scan.
 
 لأي استفسار يرجى التواصل مع الدعم الفني:
 batainehkamel2@gmail.com
@@ -234,7 +234,7 @@ batainehkamel2@gmail.com
     message = MIMEText(body, _subtype="plain", _charset="utf-8")  # مهم للعرض الكامل بالعربي
     message["From"] = FROM_EMAIL
     message["To"] = recipient_email
-    message["Subject"] = "تحديث حالة حسابك - عيادة الأمل"
+    message["Subject"] = "تحديث حالة حسابك - Pink Scan"
 
     # إرسال الإيميل
     await aiosmtplib.send(

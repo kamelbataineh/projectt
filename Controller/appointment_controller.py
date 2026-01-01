@@ -17,7 +17,7 @@ SMTP_SERVER = "smtp-relay.brevo.com"
 SMTP_PORT = 465
 SMTP_LOGIN = "9b77a8001@smtp-brevo.com"
 SMTP_PASSWORD = "WSn3aDfVAKMhJwrd"
-FROM_EMAIL = "عياده الامل  <douhasharkawi@gmail.com>"
+FROM_EMAIL = "Pink Scan  <douhasharkawi@gmail.com>"
 
 # -------------------- نموذج المواعيد --------------------
 class AppointmentResponse(BaseModel):
