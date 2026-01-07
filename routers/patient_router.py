@@ -152,7 +152,6 @@ async def update_profile(
             f.write(await profile_image.read())
         update_data.profile_image_url = file_path  # حفظ مسار الصورة
 
-    # تحديث بيانات الدكتور
     patient =await update_patient(update_data, current_user)
 
     return {

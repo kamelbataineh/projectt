@@ -14,7 +14,7 @@ from fastapi.staticfiles import StaticFiles
 from apscheduler.triggers.cron import CronTrigger
 import pytz  
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
-from routers import chat_router, patient_router 
+from routers import ai_router, chat_router, patient_router 
 from routers import dector_router
 from routers import appointment_router
 from routers import admin_router
@@ -35,6 +35,7 @@ app.include_router(appointment_router.router)
 app.include_router(admin_router.router)
 app.include_router(chat_router.router)
 app.include_router(record_router.router)
+app.include_router(ai_router.router)
 # للصور
 app.mount("/uploads", StaticFiles(directory="uploads"), name="uploads")
 
@@ -62,32 +63,3 @@ async def startup_event():
     # # 👈 إرسال تجريبي الآن
     # await send_daily_doctor_notifications()
     # print("✅ تم إرسال الإيميل التجريبي الآن")
-
-
-IMG_SIZE = 456
-CLASS_NAMES = ["benign", "malignant", "normal"]
-
-UPLOAD_DIR = "uploads"
-os.makedirs(UPLOAD_DIR, exist_ok=True)
-
-@app.post("/predict")
-async def predict(file: UploadFile = File(...)):
-    file_path = os.path.join(UPLOAD_DIR, file.filename)
-    with open(file_path, "wb") as f:
-        f.write(await file.read())
-    
-    label, probs = predict_image(file_path)
-    return {"prediction": label, "probabilities": probs}
-
-
-model = load_model("efficientnetv2l_mammography_3class.h5")
-
-def predict_image(img_path):
-    img = keras_image.load_img(img_path, target_size=(IMG_SIZE, IMG_SIZE))
-    x = keras_image.img_to_array(img)
-    x = np.expand_dims(x, axis=0)
-    x = preprocess_efficientnet_v2(x)
-    
-    preds = model.predict(x)
-    pred_idx = np.argmax(preds[0])
-    return CLASS_NAMES[pred_idx], preds[0].tolist()

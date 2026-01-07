@@ -1,3 +1,6 @@
 {
-    "database-client.capitalizeKeywordsWhenFormatting": false
+    "database-client.capitalizeKeywordsWhenFormatting": false,
+    "python.analysis.extraPaths": [
+        "./Controller"
+    ]
 }
