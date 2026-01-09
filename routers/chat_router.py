@@ -15,13 +15,6 @@ class MessagePayload(BaseModel):
     message: str
     type: str = "text"  # افتراضي نص
 
-# ===== Upload file =====
-@router.post("/upload_file/{other_id}")
-async def upload_file(other_id: str, file: UploadFile = File(...), token: dict = Depends(verify_token)):
-    user_id = token["id"]
-    file_data = await file.read()
-    result = await handle_file_upload(user_id, other_id, file_data, file.filename)
-    return JSONResponse(result)
 
 
 # ===== Send text message =====
@@ -54,27 +47,6 @@ async def list_chats(token: dict = Depends(verify_token)):
 
 
 
-@router.post("/upload_file/{other_id}")
-async def upload_file(other_id: str, file: UploadFile = File(...), token: str = Depends(verify_token)):
-    user_id = token["id"]
-    file_data = await file.read()
-    result = await handle_file_upload(user_id, other_id, file_data, file.filename)
-    return JSONResponse(result)
-
-
-
-UPLOAD_FOLDER = "uploads"  # تأكد أن نفس المسار
-
-@router.get("/preview/{user_id}/{other_id}/{filename}")
-async def preview_file(user_id: str, other_id: str, filename: str):
-    file_path = os.path.join(UPLOAD_FOLDER, user_id, other_id, filename)
-    if not os.path.exists(file_path):
-        return {"error": "File not found"}
-    
-    with open(file_path, "rb") as f:
-        decrypted_data = decrypt_bytes(f.read())
-    
-    return Response(content=decrypted_data, media_type="image/jpeg")  # أو type المناسب
 
 
 
